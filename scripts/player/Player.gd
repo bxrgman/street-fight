@@ -12,14 +12,14 @@ const DASH_COOLDOWN = 0.6
 # --- Combat Constants ---
 const ATTACK_DURATION = 0.45
 const SPECIAL_ATTACK_DURATION = 0.8
-const SPECIAL_ATTACK_HEALTH_COST = 25.0
 const COMBO_RESET_TIME = 0.6
 
 # --- Karma Constants ---
 const KARMA_MAX = 100.0
 const KARMA_LIGHT_GAIN = 8.0
-const KARMA_SPECIAL_GAIN = 25.0
+const KARMA_SPECIAL_GAIN = 60.0
 const KARMA_DECAY_RATE = 12.0
+const KARMA_DECAY_DASH_MULTIPLIER = 3.0
 const KARMA_OVERHEAT_DURATION = 2.0
 
 # --- Stats ---
@@ -39,15 +39,20 @@ var attack_timer = 0.0
 var current_attack = ""
 var combo_step = 0
 var combo_reset_timer = 0.0
+var special_attack_blocked = false  # Blocks buffered special input after stun
 
 # --- Nodes ---
 @onready var sprite = $AnimatedSprite2D
+
+func _ready():
+	add_to_group("player")
 
 func _physics_process(delta):
 	_handle_gravity(delta)
 	_handle_karma(delta)
 	_handle_attack(delta)
 
+	# Dash blocked during overheat
 	if not is_attacking and not is_overheated:
 		_handle_dash(delta)
 
@@ -60,12 +65,14 @@ func _physics_process(delta):
 	move_and_slide()
 
 func _handle_gravity(delta):
+	# Apply gravity when airborne, reset when grounded
 	if not is_on_floor():
 		velocity.y = min(velocity.y + GRAVITY * delta, GRAVITY_CAP)
 	else:
 		velocity.y = 0
 
 func _handle_movement():
+	# Lock movement during ground attacks or overheat
 	if (is_attacking or is_overheated) and is_on_floor():
 		velocity.x = 0
 		return
@@ -76,18 +83,22 @@ func _handle_movement():
 		velocity.x = 0
 
 func _handle_jump():
+	# Single jump, blocked during overheat
 	if Input.is_action_just_pressed("ui_accept") and is_on_floor() and not is_overheated:
 		velocity.y = JUMP_VELOCITY
 
 func _handle_dash(delta):
+	# Tick cooldown
 	if dash_cooldown_timer > 0:
 		dash_cooldown_timer -= delta
 
+	# Trigger dash
 	if Input.is_action_just_pressed("dash") and dash_cooldown_timer <= 0 and not is_dashing:
 		is_dashing = true
 		dash_timer = DASH_DURATION
 		dash_cooldown_timer = DASH_COOLDOWN
 
+	# Apply dash velocity
 	if is_dashing:
 		velocity.x = facing * DASH_SPEED
 		dash_timer -= delta
@@ -95,17 +106,25 @@ func _handle_dash(delta):
 			is_dashing = false
 
 func _handle_karma(delta):
+	# During overheat: player is stunned, tick recovery timer
 	if is_overheated:
 		overheat_timer -= delta
 		if overheat_timer <= 0:
 			is_overheated = false
-			karma = 0.0
+			# Block special attack until player releases and represses the button
+			special_attack_blocked = true
 		return
 
+	# Karma decays passively when not attacking
+	# Dashing recovers karma faster
 	if not is_attacking:
-		karma = max(karma - KARMA_DECAY_RATE * delta, 0.0)
+		if is_dashing:
+			karma = max(karma - KARMA_DECAY_RATE * KARMA_DECAY_DASH_MULTIPLIER * delta, 0.0)
+		else:
+			karma = max(karma - KARMA_DECAY_RATE * delta, 0.0)
 
 func _add_karma(amount: float):
+	# Add karma and trigger overheat if maxed
 	if is_overheated:
 		return
 	karma = min(karma + amount, KARMA_MAX)
@@ -116,15 +135,21 @@ func _add_karma(amount: float):
 		current_attack = ""
 
 func _handle_attack(delta):
+	# Clear special attack block once player releases the button
+	if special_attack_blocked and not Input.is_action_pressed("attack_heavy"):
+		special_attack_blocked = false
+
+	# Block all attacks during overheat stun
 	if is_overheated:
 		return
 
-	# Tick combo reset
+	# Tick combo reset timer when not attacking
 	if combo_reset_timer > 0 and not is_attacking:
 		combo_reset_timer -= delta
 		if combo_reset_timer <= 0:
 			combo_step = 0
 
+	# Tick active attack duration
 	if is_attacking:
 		attack_timer -= delta
 		if attack_timer <= 0:
@@ -133,6 +158,7 @@ func _handle_attack(delta):
 			combo_reset_timer = COMBO_RESET_TIME
 		return
 
+	# Air attack — light attack only, no combo in air
 	if not is_on_floor():
 		if Input.is_action_just_pressed("attack_light"):
 			is_attacking = true
@@ -142,17 +168,28 @@ func _handle_attack(delta):
 			_add_karma(KARMA_LIGHT_GAIN)
 		return
 
+	# Special attack — blocked if:
+	# 1. Input buffered during stun
+	# 2. Health is at last segment (33 or below)
 	if Input.is_action_just_pressed("attack_heavy"):
-		if health > SPECIAL_ATTACK_HEALTH_COST:
-			health -= SPECIAL_ATTACK_HEALTH_COST
-			is_attacking = true
-			current_attack = "special_attack"
-			attack_timer = SPECIAL_ATTACK_DURATION
-			combo_step = 0
-			combo_reset_timer = 0.0
+		if special_attack_blocked:
+			return
+		if health <= 33.0:
+			return
+		if karma >= KARMA_MAX * 0.9:
+			health -= 33.0
+			health = max(health, 0.0)
+		else:
 			_add_karma(KARMA_SPECIAL_GAIN)
+		is_attacking = true
+		current_attack = "special_attack"
+		attack_timer = SPECIAL_ATTACK_DURATION
+		combo_step = 0
+		combo_reset_timer = 0.0
 		return
 
+	# Ground combo — Z cycles through attack_1, attack_2, attack_3
+	# Must press within COMBO_RESET_TIME window to advance combo
 	if Input.is_action_just_pressed("attack_light"):
 		combo_step = (combo_step % 3) + 1
 		current_attack = "attack_" + str(combo_step)
@@ -162,12 +199,14 @@ func _handle_attack(delta):
 		_add_karma(KARMA_LIGHT_GAIN)
 
 func _handle_facing():
+	# Flip sprite based on direction, locked during attacks
 	var dir = Input.get_axis("ui_left", "ui_right")
 	if dir != 0 and not is_attacking:
 		facing = int(sign(dir))
 		sprite.flip_h = facing == -1
 
 func _handle_animation():
+	# Priority: overheat > attacking > dashing > airborne > moving > idle
 	if is_overheated:
 		sprite.play("hurt")
 	elif is_attacking:

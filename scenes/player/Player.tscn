@@ -1358,4 +1358,4 @@ shape = SubResource("RectangleShape2D_gfjak")
 position = Vector2(0, -2)
 sprite_frames = SubResource("SpriteFrames_arqi6")
 animation = &"attack_3"
-frame_progress = 0.5838216
+frame_progress = 0.28456444

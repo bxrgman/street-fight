@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://dddevlvu0gl31"]
+
+[ext_resource type="Texture2D" uid="uid://bjvgx545m3xwv" path="res://assets/sprites/HUD/bar_full.png" id="1_1etfg"]
+[ext_resource type="Texture2D" uid="uid://c43hppnppwv6j" path="res://assets/sprites/HUD/karma_bar.png" id="2_7hsmw"]
+[ext_resource type="Texture2D" uid="uid://f335xogr5h53" path="res://assets/sprites/HUD/heart.png" id="3_nysna"]
+[ext_resource type="Script" uid="uid://djqdgn1vp13ck" path="res://scripts/ui/HUD.gd" id="4_ig75s"]
+
+[node name="Hud" type="CanvasLayer" unique_id=271866720]
+script = ExtResource("4_ig75s")
+
+[node name="HealthBar" type="TextureRect" parent="." unique_id=1801081522]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 87.0
+offset_bottom = 24.0
+texture = ExtResource("1_1etfg")
+
+[node name="Heart" type="TextureRect" parent="." unique_id=1238718900]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 33.0
+offset_bottom = 25.0
+texture = ExtResource("3_nysna")
+
+[node name="KarmaBar" type="TextureProgressBar" parent="." unique_id=1219482559]
+offset_left = 10.0
+offset_top = 30.0
+offset_right = 93.0
+offset_bottom = 48.0
+texture_progress = ExtResource("2_7hsmw")
