@@ -15,9 +15,19 @@ const SPECIAL_ATTACK_DURATION = 0.8
 const SPECIAL_ATTACK_HEALTH_COST = 25.0
 const COMBO_RESET_TIME = 0.6
 
+# --- Karma Constants ---
+const KARMA_MAX = 100.0
+const KARMA_LIGHT_GAIN = 8.0
+const KARMA_SPECIAL_GAIN = 25.0
+const KARMA_DECAY_RATE = 12.0
+const KARMA_OVERHEAT_DURATION = 2.0
+
 # --- Stats ---
 var max_health = 100.0
 var health = 100.0
+var karma = 0.0
+var is_overheated = false
+var overheat_timer = 0.0
 
 # --- State ---
 var is_dashing = false
@@ -35,9 +45,10 @@ var combo_reset_timer = 0.0
 
 func _physics_process(delta):
 	_handle_gravity(delta)
+	_handle_karma(delta)
 	_handle_attack(delta)
 
-	if not is_attacking:
+	if not is_attacking and not is_overheated:
 		_handle_dash(delta)
 
 	if not is_dashing:
@@ -55,7 +66,7 @@ func _handle_gravity(delta):
 		velocity.y = 0
 
 func _handle_movement():
-	if is_attacking and is_on_floor():
+	if (is_attacking or is_overheated) and is_on_floor():
 		velocity.x = 0
 		return
 	var dir = Input.get_axis("ui_left", "ui_right")
@@ -65,7 +76,7 @@ func _handle_movement():
 		velocity.x = 0
 
 func _handle_jump():
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+	if Input.is_action_just_pressed("ui_accept") and is_on_floor() and not is_overheated:
 		velocity.y = JUMP_VELOCITY
 
 func _handle_dash(delta):
@@ -83,7 +94,31 @@ func _handle_dash(delta):
 		if dash_timer <= 0:
 			is_dashing = false
 
+func _handle_karma(delta):
+	if is_overheated:
+		overheat_timer -= delta
+		if overheat_timer <= 0:
+			is_overheated = false
+			karma = 0.0
+		return
+
+	if not is_attacking:
+		karma = max(karma - KARMA_DECAY_RATE * delta, 0.0)
+
+func _add_karma(amount: float):
+	if is_overheated:
+		return
+	karma = min(karma + amount, KARMA_MAX)
+	if karma >= KARMA_MAX:
+		is_overheated = true
+		overheat_timer = KARMA_OVERHEAT_DURATION
+		is_attacking = false
+		current_attack = ""
+
 func _handle_attack(delta):
+	if is_overheated:
+		return
+
 	# Tick combo reset
 	if combo_reset_timer > 0 and not is_attacking:
 		combo_reset_timer -= delta
@@ -104,6 +139,7 @@ func _handle_attack(delta):
 			current_attack = "air_attack"
 			attack_timer = ATTACK_DURATION
 			combo_step = 0
+			_add_karma(KARMA_LIGHT_GAIN)
 		return
 
 	if Input.is_action_just_pressed("attack_heavy"):
@@ -114,6 +150,7 @@ func _handle_attack(delta):
 			attack_timer = SPECIAL_ATTACK_DURATION
 			combo_step = 0
 			combo_reset_timer = 0.0
+			_add_karma(KARMA_SPECIAL_GAIN)
 		return
 
 	if Input.is_action_just_pressed("attack_light"):
@@ -122,6 +159,7 @@ func _handle_attack(delta):
 		is_attacking = true
 		attack_timer = ATTACK_DURATION
 		combo_reset_timer = 0.0
+		_add_karma(KARMA_LIGHT_GAIN)
 
 func _handle_facing():
 	var dir = Input.get_axis("ui_left", "ui_right")
@@ -130,7 +168,9 @@ func _handle_facing():
 		sprite.flip_h = facing == -1
 
 func _handle_animation():
-	if is_attacking:
+	if is_overheated:
+		sprite.play("hurt")
+	elif is_attacking:
 		sprite.play(current_attack)
 	elif is_dashing:
 		sprite.play("dash")
