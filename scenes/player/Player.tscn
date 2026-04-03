@@ -1357,4 +1357,5 @@ shape = SubResource("RectangleShape2D_gfjak")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1958884422]
 position = Vector2(0, -2)
 sprite_frames = SubResource("SpriteFrames_arqi6")
-animation = &"air_attack"
+animation = &"attack_3"
+frame_progress = 0.3927699
