@@ -2,9 +2,10 @@
 
 [ext_resource type="PackedScene" uid="uid://dcvy2wivh6uup" path="res://scenes/player/Player.tscn" id="1_i2pqh"]
 [ext_resource type="PackedScene" uid="uid://dddevlvu0gl31" path="res://scenes/ui/HUD.tscn" id="2_gsbbr"]
+[ext_resource type="PackedScene" uid="uid://clpeyge3b7xtu" path="res://scenes/enemies/Oni.tscn" id="3_qtqmo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0idui"]
-size = Vector2(320, 16)
+size = Vector2(1200, 16)
 
 [node name="Level01" type="Node2D" unique_id=773816931]
 
@@ -12,16 +13,19 @@ size = Vector2(320, 16)
 position = Vector2(0, 200)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=860719100]
-position = Vector2(194, 160)
+position = Vector2(633, 161)
 shape = SubResource("RectangleShape2D_0idui")
 
 [node name="ColorRect" type="ColorRect" parent="Ground" unique_id=581330644]
-offset_left = 34.0
-offset_top = 152.0
-offset_right = 354.0
-offset_bottom = 168.0
+offset_left = 33.0
+offset_top = 153.0
+offset_right = 1233.0
+offset_bottom = 169.0
 
 [node name="Player" parent="." unique_id=1621257842 instance=ExtResource("1_i2pqh")]
-position = Vector2(100, 100)
+position = Vector2(136, 289)
 
 [node name="Hud" parent="." unique_id=271866720 instance=ExtResource("2_gsbbr")]
+
+[node name="Oni" parent="." unique_id=1126774902 instance=ExtResource("3_qtqmo")]
+position = Vector2(431, 310)
