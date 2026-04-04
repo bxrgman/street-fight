@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://clpeyge3b7xtu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rlpec"]
+size = Vector2(28, 60)
+
+[node name="Oni" type="CharacterBody2D" unique_id=1126774902]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2057138655]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AnimatedSprite2D" unique_id=59165087]
+shape = SubResource("RectangleShape2D_rlpec")
