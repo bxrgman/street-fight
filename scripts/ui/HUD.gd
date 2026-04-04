@@ -8,8 +8,6 @@ var player: CharacterBody2D
 
 func _ready():
 	player = get_tree().get_first_node_in_group("player")
-	print("karma_bar node: ", karma_bar)
-	print("player found: ", player)
 
 func _process(_delta):
 	if player == null:
@@ -20,6 +18,10 @@ func _process(_delta):
 
 func _update_health():
 	var ratio = player.health / player.max_health
+	if ratio <= 0:
+		health_bar.visible = false
+		return
+	health_bar.visible = true
 	if ratio > 0.83:
 		health_bar.texture = preload("res://assets/sprites/HUD/bar_full.png")
 	elif ratio > 0.66:

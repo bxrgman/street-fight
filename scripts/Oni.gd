@@ -20,6 +20,7 @@ var health = 150.0
 var is_phase2 = false
 var has_shouted = false
 var shout_push_triggered = false
+var player_is_dead = false
 
 # --- Attack damage ---
 const ATTACK_1_DAMAGE = 20.0
@@ -47,20 +48,24 @@ var facing = -1
 
 # --- Nodes ---
 @onready var sprite = $AnimatedSprite2D
+@onready var hitbox = $Hitbox
 
 # --- Player Reference ---
 var player = null
+var already_hit_player = false
 
 func _ready():
 	player = get_tree().get_first_node_in_group("player")
 	add_to_group("enemies")
 	sprite.speed_scale = DORMANT_FPS / 10.0
+	hitbox.monitoring = false
 
 func _physics_process(delta):
 	_handle_gravity(delta)
 	_handle_state(delta)
 	_handle_facing()
 	_check_shout_frame()
+	_handle_hitbox()
 	_handle_animation()
 	move_and_slide()
 
@@ -71,18 +76,35 @@ func _handle_gravity(delta):
 		velocity.y = 0
 
 func _handle_facing():
-	if player == null or state == State.DEATH:
+	if player == null or state == State.DEATH or player_is_dead:
 		return
 	facing = sign(player.global_position.x - global_position.x)
 
 func _check_shout_frame():
-	# Trigger push at frame 7 of shout animation
 	if state == State.SHOUT and not shout_push_triggered:
 		if sprite.frame >= 7:
 			shout_push_triggered = true
 			_trigger_shout_push()
 
+func _handle_hitbox():
+	if state == State.ATTACK and not player_is_dead:
+		hitbox.monitoring = true
+		hitbox.position.x = abs(hitbox.position.x) * facing
+		for area in hitbox.get_overlapping_areas():
+			var body = area.get_parent()
+			if body.has_method("take_damage") and not already_hit_player:
+				already_hit_player = true
+				body.take_damage(get_attack_damage())
+	else:
+		hitbox.monitoring = false
+		already_hit_player = false
+
 func _handle_state(delta):
+	# If player is dead, freeze all AI
+	if player_is_dead:
+		velocity = Vector2.ZERO
+		return
+
 	if action_timer > 0:
 		action_timer -= delta
 		if action_timer <= 0:
@@ -141,6 +163,7 @@ func _start_attack(attack_name):
 	current_attack = attack_name
 	attack_cooldown_timer = ATTACK_COOLDOWN
 	action_timer = 0.8
+	already_hit_player = false
 
 func _trigger_phase2():
 	has_shouted = true
@@ -209,6 +232,13 @@ func _distance_to_player() -> float:
 	if player == null:
 		return 9999.0
 	return abs(global_position.x - player.global_position.x)
+
+func on_player_died():
+	player_is_dead = true
+	state = State.DORMANT
+	velocity = Vector2.ZERO
+	action_timer = 0.0
+	attack_cooldown_timer = 0.0
 
 func _handle_animation():
 	var suffix = "_flaming" if is_phase2 else ""

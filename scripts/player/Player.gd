@@ -31,6 +31,17 @@ var is_pushed = false
 var push_timer = 0.0
 const PUSH_DURATION = 0.3
 
+# --- Hurt State ---
+var is_hurt = false
+var hurt_timer = 0.0
+const HURT_DURATION = 0.4
+var is_invincible = false
+var invincible_timer = 0.0
+const INVINCIBLE_DURATION = 0.5
+
+# --- Death State ---
+var is_dead = false
+
 # --- Stats ---
 var max_health = 100.0
 var health = 100.0
@@ -54,18 +65,24 @@ var already_hit = []
 # --- Nodes ---
 @onready var sprite = $AnimatedSprite2D
 @onready var hitbox = $Hitbox
+@onready var hurtbox = $Hurtbox
 
 func _ready():
 	add_to_group("player")
 	hitbox.monitoring = false
 
 func _physics_process(delta):
+	if is_dead:
+		return
+
 	_handle_gravity(delta)
 	_handle_karma(delta)
+	_handle_hurt(delta)
+	_handle_invincible(delta)
 	_handle_attack(delta)
 	_handle_hitbox()
 
-	if not is_attacking and not is_overheated:
+	if not is_attacking and not is_overheated and not is_hurt:
 		_handle_dash(delta)
 
 	if not is_dashing:
@@ -82,16 +99,26 @@ func _handle_gravity(delta):
 	else:
 		velocity.y = 0
 
+func _handle_hurt(delta):
+	if is_hurt:
+		hurt_timer -= delta
+		if hurt_timer <= 0:
+			is_hurt = false
+
+func _handle_invincible(delta):
+	if is_invincible:
+		invincible_timer -= delta
+		if invincible_timer <= 0:
+			is_invincible = false
+
 func _handle_movement(delta):
-	# Handle push state
 	if is_pushed:
 		push_timer -= delta
 		if push_timer <= 0:
 			is_pushed = false
 		return
 
-	# Lock movement during ground attacks or overheat
-	if (is_attacking or is_overheated) and is_on_floor():
+	if (is_attacking or is_overheated or is_hurt) and is_on_floor():
 		velocity.x = 0
 		return
 	var dir = Input.get_axis("ui_left", "ui_right")
@@ -106,8 +133,39 @@ func apply_push(force_x: float, force_y: float):
 	is_pushed = true
 	push_timer = PUSH_DURATION
 
+func take_damage(amount: float):
+	if is_dashing or is_dead or is_invincible:
+		return
+	health -= amount
+	health = max(health, 0.0)
+	if health <= 0:
+		health = 0.0
+		_die()
+		return
+	is_hurt = true
+	hurt_timer = HURT_DURATION
+	is_invincible = true
+	invincible_timer = INVINCIBLE_DURATION
+	is_attacking = false
+	current_attack = ""
+	already_hit.clear()
+
+func _die():
+	is_dead = true
+	velocity = Vector2.ZERO
+	hitbox.monitoring = false
+	sprite.play("death")
+	# Wait for death animation to finish before notifying enemies
+	sprite.animation_finished.connect(_on_death_animation_finished)
+
+func _on_death_animation_finished():
+	if sprite.animation == "death":
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if enemy.has_method("on_player_died"):
+				enemy.on_player_died()
+
 func _handle_jump():
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor() and not is_overheated:
+	if Input.is_action_just_pressed("ui_accept") and is_on_floor() and not is_overheated and not is_hurt:
 		velocity.y = JUMP_VELOCITY
 
 func _handle_dash(delta):
@@ -149,6 +207,9 @@ func _add_karma(amount: float):
 		current_attack = ""
 
 func _handle_attack(delta):
+	if is_hurt:
+		return
+
 	if special_attack_blocked and not Input.is_action_pressed("attack_heavy"):
 		special_attack_blocked = false
 
@@ -220,13 +281,15 @@ func _handle_hitbox():
 
 func _handle_facing():
 	var dir = Input.get_axis("ui_left", "ui_right")
-	if dir != 0 and not is_attacking:
+	if dir != 0 and not is_attacking and not is_hurt:
 		facing = int(sign(dir))
 		sprite.flip_h = facing == -1
 		hitbox.position.x = abs(hitbox.position.x) * facing
 
 func _handle_animation():
-	if is_overheated:
+	if is_hurt:
+		sprite.play("hurt")
+	elif is_overheated:
 		sprite.play("hurt")
 	elif is_attacking:
 		sprite.play(current_attack)
