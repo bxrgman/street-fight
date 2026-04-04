@@ -1343,8 +1343,12 @@ animations = [{
 "speed": 10.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8nn5r"]
+size = Vector2(40, 30)
+
 [node name="Player" type="CharacterBody2D" unique_id=1621257842]
 position = Vector2(129, 141)
+collision_mask = 9
 script = ExtResource("1_wr5hl")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1817764697]
@@ -1359,3 +1363,12 @@ position = Vector2(0, -2)
 sprite_frames = SubResource("SpriteFrames_arqi6")
 animation = &"attack_3"
 frame_progress = 0.28456444
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=1505722276]
+position = Vector2(30, 0)
+collision_layer = 4
+collision_mask = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=1216366188]
+position = Vector2(6, 15)
+shape = SubResource("RectangleShape2D_8nn5r")

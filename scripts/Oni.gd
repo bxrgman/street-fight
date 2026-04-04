@@ -15,10 +15,11 @@ const ACTIVE_FPS = 10
 const FLAMING_IDLE_FPS = 14
 
 # --- Stats ---
-var max_health = 300.0
-var health = 300.0
+var max_health = 150.0
+var health = 150.0
 var is_phase2 = false
 var has_shouted = false
+var shout_push_triggered = false
 
 # --- Attack damage ---
 const ATTACK_1_DAMAGE = 20.0
@@ -33,13 +34,13 @@ const SHOUT_PUSH_FORCE = 400.0
 const ATTACK_COOLDOWN = 2.0
 const HURT_DURATION = 0.4
 const SHOUT_DURATION = 1.5
-const DEFEND_DURATION = 1.0
+const DEATH_DURATION = 2.6
 
 var attack_cooldown_timer = 0.0
 var action_timer = 0.0
 
 # --- State Machine ---
-enum State { DORMANT, IDLE, CHASE, ATTACK, HURT, DEFEND, SHOUT, DEATH }
+enum State { DORMANT, IDLE, CHASE, ATTACK, HURT, SHOUT, DEATH }
 var state = State.DORMANT
 var current_attack = ""
 var facing = -1
@@ -59,6 +60,7 @@ func _physics_process(delta):
 	_handle_gravity(delta)
 	_handle_state(delta)
 	_handle_facing()
+	_check_shout_frame()
 	_handle_animation()
 	move_and_slide()
 
@@ -69,10 +71,16 @@ func _handle_gravity(delta):
 		velocity.y = 0
 
 func _handle_facing():
-	if player == null:
+	if player == null or state == State.DEATH:
 		return
-	# Always face the player
 	facing = sign(player.global_position.x - global_position.x)
+
+func _check_shout_frame():
+	# Trigger push at frame 7 of shout animation
+	if state == State.SHOUT and not shout_push_triggered:
+		if sprite.frame >= 7:
+			shout_push_triggered = true
+			_trigger_shout_push()
 
 func _handle_state(delta):
 	if action_timer > 0:
@@ -107,7 +115,7 @@ func _handle_state(delta):
 				state = State.DORMANT
 				return
 			var dist = _distance_to_player()
-			if dist > GIVEUP_RANGE:
+			if not is_phase2 and dist > GIVEUP_RANGE:
 				state = State.DORMANT
 				return
 			if dist <= ATTACK_RANGE and attack_cooldown_timer <= 0:
@@ -116,14 +124,10 @@ func _handle_state(delta):
 			var dir = sign(player.global_position.x - global_position.x)
 			velocity.x = dir * SPEED
 
-		State.ATTACK, State.HURT, State.DEFEND, State.SHOUT:
-			velocity.x = 0
-
-		State.DEATH:
+		State.ATTACK, State.HURT, State.SHOUT, State.DEATH:
 			velocity.x = 0
 
 func _choose_attack():
-	# Only attacks — no random defend or shout during combat
 	var attack_roll = randi() % 3
 	if attack_roll == 0:
 		_start_attack("attack_1")
@@ -139,17 +143,15 @@ func _start_attack(attack_name):
 	action_timer = 0.8
 
 func _trigger_phase2():
-	# Phase transition — shout then go flaming
 	has_shouted = true
+	shout_push_triggered = false
 	state = State.SHOUT
 	action_timer = SHOUT_DURATION
-	_trigger_shout_push()
 
 func _trigger_shout_push():
 	if player and _distance_to_player() <= SHOUT_PUSH_RANGE:
 		var dir = sign(player.global_position.x - global_position.x)
-		player.velocity.x += dir * SHOUT_PUSH_FORCE
-		player.velocity.y = -150.0
+		player.apply_push(dir * SHOUT_PUSH_FORCE, -200.0)
 
 	for body in get_tree().get_nodes_in_group("enemies"):
 		if body == self:
@@ -158,7 +160,7 @@ func _trigger_shout_push():
 			var dist = abs(body.global_position.x - global_position.x)
 			if dist <= SHOUT_PUSH_RANGE:
 				var dir = sign(body.global_position.x - global_position.x)
-				body.velocity.x += dir * SHOUT_PUSH_FORCE
+				body.velocity.x = dir * SHOUT_PUSH_FORCE
 
 func _end_action():
 	if state == State.DEATH:
@@ -166,31 +168,28 @@ func _end_action():
 		return
 	if state == State.HURT and health <= 0:
 		state = State.DEATH
-		action_timer = 2.0
+		velocity.x = 0
+		action_timer = DEATH_DURATION
 		return
-	# Phase 2 activates after shout finishes
 	if state == State.SHOUT and has_shouted and not is_phase2:
 		is_phase2 = true
 	state = State.CHASE
 	current_attack = ""
 
 func take_damage(amount: float):
-	if state == State.DEATH:
+	if state == State.DEATH or state == State.SHOUT:
 		return
-	if state == State.DEFEND:
-		amount *= 0.2
 	health -= amount
 	health = max(health, 0.0)
 
-	# Trigger phase 2 transition via shout
 	if not has_shouted and health / max_health <= PHASE2_HEALTH_THRESHOLD:
 		_trigger_phase2()
 		return
 
 	if health <= 0:
 		state = State.DEATH
-		action_timer = 2.0
 		velocity.x = 0
+		action_timer = DEATH_DURATION
 		return
 
 	state = State.HURT
@@ -237,12 +236,10 @@ func _handle_animation():
 		State.HURT:
 			sprite.speed_scale = 1.0
 			sprite.play("hurt" + suffix)
-		State.DEFEND:
-			sprite.speed_scale = 1.0
-			sprite.play("defend")
 		State.SHOUT:
 			sprite.speed_scale = 1.0
 			sprite.play("shout")
 		State.DEATH:
 			sprite.speed_scale = 1.0
 			sprite.play("death")
+			sprite.flip_h = facing == -1

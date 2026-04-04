@@ -28,4 +28,4 @@ position = Vector2(136, 289)
 [node name="Hud" parent="." unique_id=271866720 instance=ExtResource("2_gsbbr")]
 
 [node name="Oni" parent="." unique_id=1126774902 instance=ExtResource("3_qtqmo")]
-position = Vector2(431, 310)
+position = Vector2(429, 307)
