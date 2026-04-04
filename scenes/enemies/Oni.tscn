@@ -1147,7 +1147,6 @@ size = Vector2(50, 40)
 
 [node name="Oni" type="CharacterBody2D" unique_id=1126774902]
 collision_layer = 2
-collision_mask = 7
 script = ExtResource("18_oajwi")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2057138655]
@@ -1166,7 +1165,7 @@ collision_mask = 4
 shape = SubResource("RectangleShape2D_cfsy1")
 
 [node name="Hitbox" type="Area2D" parent="." unique_id=1557262874]
-collision_layer = 8
+collision_layer = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=786300717]
 shape = SubResource("RectangleShape2D_a304k")

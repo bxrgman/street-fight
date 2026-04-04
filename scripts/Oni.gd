@@ -66,6 +66,8 @@ func _ready():
 	add_to_group("enemies")
 	sprite.speed_scale = DORMANT_FPS / 10.0
 	hitbox.monitoring = false
+	set_collision_layer_value(1, false)
+	set_collision_mask_value(2, false)
 
 func _physics_process(delta):
 	_handle_gravity(delta)

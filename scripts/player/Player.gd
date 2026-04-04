@@ -7,7 +7,9 @@ const GRAVITY = 900.0
 const GRAVITY_CAP = 600.0
 const DASH_SPEED = 500.0
 const DASH_DURATION = 0.25
-const DASH_COOLDOWN = 0.6
+const DASH_COOLDOWN = 0.3
+const DASH_RECHARGE = 3.0
+const MAX_DASHES = 2
 
 # --- Combat Constants ---
 const ATTACK_DURATION = 0.45
@@ -53,6 +55,8 @@ var overheat_timer = 0.0
 var is_dashing = false
 var dash_timer = 0.0
 var dash_cooldown_timer = 0.0
+var dash_recharge_timer = 0.0
+var dashes_remaining = MAX_DASHES
 var facing = 1
 var is_attacking = false
 var attack_timer = 0.0
@@ -66,6 +70,7 @@ var already_hit = []
 @onready var sprite = $AnimatedSprite2D
 @onready var hitbox = $Hitbox
 @onready var hurtbox = $Hurtbox
+@onready var collision = $CollisionShape2D
 
 func _ready():
 	add_to_group("player")
@@ -150,12 +155,28 @@ func take_damage(amount: float):
 	current_attack = ""
 	already_hit.clear()
 
+func take_damage_with_stun(amount: float, stun_duration: float):
+	if is_dashing or is_dead or is_invincible:
+		return
+	health -= amount
+	health = max(health, 0.0)
+	if health <= 0:
+		health = 0.0
+		_die()
+		return
+	is_hurt = true
+	hurt_timer = stun_duration
+	is_invincible = true
+	invincible_timer = stun_duration
+	is_attacking = false
+	current_attack = ""
+	already_hit.clear()
+
 func _die():
 	is_dead = true
 	velocity = Vector2.ZERO
 	hitbox.monitoring = false
 	sprite.play("death")
-	# Wait for death animation to finish before notifying enemies
 	sprite.animation_finished.connect(_on_death_animation_finished)
 
 func _on_death_animation_finished():
@@ -172,16 +193,29 @@ func _handle_dash(delta):
 	if dash_cooldown_timer > 0:
 		dash_cooldown_timer -= delta
 
-	if Input.is_action_just_pressed("dash") and dash_cooldown_timer <= 0 and not is_dashing:
+	if dash_recharge_timer > 0:
+		dash_recharge_timer -= delta
+		if dash_recharge_timer <= 0:
+			dashes_remaining = MAX_DASHES
+
+	if Input.is_action_just_pressed("dash") and dash_cooldown_timer <= 0 and not is_dashing and dashes_remaining > 0:
 		is_dashing = true
 		dash_timer = DASH_DURATION
 		dash_cooldown_timer = DASH_COOLDOWN
+		dashes_remaining -= 1
+		if dashes_remaining <= 0:
+			dash_recharge_timer = DASH_RECHARGE
 
 	if is_dashing:
+		collision.disabled = true
 		velocity.x = facing * DASH_SPEED
+		velocity.y = 0  # Lock Y completely during dash
 		dash_timer -= delta
 		if dash_timer <= 0:
 			is_dashing = false
+			collision.disabled = false
+	else:
+		collision.disabled = false
 
 func _handle_karma(delta):
 	if is_overheated:
@@ -285,23 +319,6 @@ func _handle_facing():
 		facing = int(sign(dir))
 		sprite.flip_h = facing == -1
 		hitbox.position.x = abs(hitbox.position.x) * facing
-		
-func take_damage_with_stun(amount: float, stun_duration: float):
-	if is_dashing or is_dead or is_invincible:
-		return
-	health -= amount
-	health = max(health, 0.0)
-	if health <= 0:
-		health = 0.0
-		_die()
-		return
-	is_hurt = true
-	hurt_timer = stun_duration
-	is_invincible = true
-	invincible_timer = stun_duration
-	is_attacking = false
-	current_attack = ""
-	already_hit.clear()
 
 func _handle_animation():
 	if is_hurt:
