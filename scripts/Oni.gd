@@ -26,6 +26,11 @@ var player_is_dead = false
 const ATTACK_1_DAMAGE = 20.0
 const ATTACK_2_DAMAGE = 30.0
 const ATTACK_3_DAMAGE = 25.0
+const JUMP_ATTACK_DAMAGE = 40.0
+
+# --- Jump Attack Knockback ---
+const JUMP_ATTACK_PUSH_FORCE = 350.0
+const JUMP_ATTACK_STUN_DURATION = 0.8
 
 # --- Shout Constants ---
 const SHOUT_PUSH_RANGE = 150.0
@@ -33,11 +38,13 @@ const SHOUT_PUSH_FORCE = 400.0
 
 # --- Timers ---
 const ATTACK_COOLDOWN = 2.0
+const JUMP_ATTACK_COOLDOWN = 8.0
 const HURT_DURATION = 0.4
 const SHOUT_DURATION = 1.5
 const DEATH_DURATION = 2.6
 
 var attack_cooldown_timer = 0.0
+var jump_attack_cooldown_timer = 0.0
 var action_timer = 0.0
 
 # --- State Machine ---
@@ -94,7 +101,13 @@ func _handle_hitbox():
 			var body = area.get_parent()
 			if body.has_method("take_damage") and not already_hit_player:
 				already_hit_player = true
-				body.take_damage(get_attack_damage())
+				# Jump attack applies knockback and longer stun
+				if current_attack == "jump_attack" or current_attack == "jump_attack_flaming":
+					var dir = sign(body.global_position.x - global_position.x)
+					body.apply_push(dir * JUMP_ATTACK_PUSH_FORCE, -150.0)
+					body.take_damage_with_stun(get_attack_damage(), JUMP_ATTACK_STUN_DURATION)
+				else:
+					body.take_damage(get_attack_damage())
 	else:
 		hitbox.monitoring = false
 		already_hit_player = false
@@ -113,6 +126,9 @@ func _handle_state(delta):
 
 	if attack_cooldown_timer > 0:
 		attack_cooldown_timer -= delta
+
+	if jump_attack_cooldown_timer > 0:
+		jump_attack_cooldown_timer -= delta
 
 	match state:
 		State.DORMANT:
@@ -150,19 +166,29 @@ func _handle_state(delta):
 			velocity.x = 0
 
 func _choose_attack():
-	var attack_roll = randi() % 3
-	if attack_roll == 0:
-		_start_attack("attack_1")
-	elif attack_roll == 1:
-		_start_attack("attack_2")
+	# 1 in 5 chance for jump attack if cooldown is ready
+	var roll = randi() % 5
+	if roll == 0 and jump_attack_cooldown_timer <= 0:
+		_start_attack("jump_attack")
+		jump_attack_cooldown_timer = JUMP_ATTACK_COOLDOWN
 	else:
-		_start_attack("attack_3")
+		var attack_roll = randi() % 3
+		if attack_roll == 0:
+			_start_attack("attack_1")
+		elif attack_roll == 1:
+			_start_attack("attack_2")
+		else:
+			_start_attack("attack_3")
 
 func _start_attack(attack_name):
 	state = State.ATTACK
-	current_attack = attack_name
+	# Use flaming variant if in phase 2
+	if is_phase2 and attack_name == "jump_attack":
+		current_attack = "jump_attack_flaming"
+	else:
+		current_attack = attack_name
 	attack_cooldown_timer = ATTACK_COOLDOWN
-	action_timer = 0.8
+	action_timer = 1.2 if current_attack.begins_with("jump_attack") else 0.8
 	already_hit_player = false
 
 func _trigger_phase2():
@@ -226,6 +252,8 @@ func get_attack_damage() -> float:
 		base = ATTACK_2_DAMAGE
 	elif current_attack == "attack_3":
 		base = ATTACK_3_DAMAGE
+	elif current_attack == "jump_attack" or current_attack == "jump_attack_flaming":
+		base = JUMP_ATTACK_DAMAGE
 	return base * (2.0 if is_phase2 else 1.0)
 
 func _distance_to_player() -> float:
@@ -261,7 +289,7 @@ func _handle_animation():
 			sprite.flip_h = facing == -1
 		State.ATTACK:
 			sprite.speed_scale = 1.0
-			sprite.play(current_attack + suffix)
+			sprite.play(current_attack)
 			sprite.flip_h = facing == -1
 		State.HURT:
 			sprite.speed_scale = 1.0

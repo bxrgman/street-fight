@@ -285,6 +285,23 @@ func _handle_facing():
 		facing = int(sign(dir))
 		sprite.flip_h = facing == -1
 		hitbox.position.x = abs(hitbox.position.x) * facing
+		
+func take_damage_with_stun(amount: float, stun_duration: float):
+	if is_dashing or is_dead or is_invincible:
+		return
+	health -= amount
+	health = max(health, 0.0)
+	if health <= 0:
+		health = 0.0
+		_die()
+		return
+	is_hurt = true
+	hurt_timer = stun_duration
+	is_invincible = true
+	invincible_timer = stun_duration
+	is_attacking = false
+	current_attack = ""
+	already_hit.clear()
 
 func _handle_animation():
 	if is_hurt:
