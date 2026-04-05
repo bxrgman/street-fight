@@ -1358,8 +1358,6 @@ shape = SubResource("RectangleShape2D_gfjak")
 
 [node name="Sprite2D" type="Sprite2D" parent="CollisionShape2D" unique_id=1590591532]
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=487795546]
-
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1958884422]
 position = Vector2(0, -2)
 sprite_frames = SubResource("SpriteFrames_arqi6")
@@ -1379,3 +1377,6 @@ collision_mask = 8
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=1882143164]
 shape = SubResource("RectangleShape2D_kvwax")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=749314562]
+offset = Vector2(0, -70)

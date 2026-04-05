@@ -3,6 +3,9 @@
 [ext_resource type="PackedScene" uid="uid://dcvy2wivh6uup" path="res://scenes/player/Player.tscn" id="1_i2pqh"]
 [ext_resource type="PackedScene" uid="uid://dddevlvu0gl31" path="res://scenes/ui/HUD.tscn" id="2_gsbbr"]
 [ext_resource type="PackedScene" uid="uid://clpeyge3b7xtu" path="res://scenes/enemies/Oni.tscn" id="3_qtqmo"]
+[ext_resource type="Texture2D" uid="uid://deb0byxeubino" path="res://assets/background/1.png" id="4_a5anj"]
+[ext_resource type="Texture2D" uid="uid://il6ok0vd8wsl" path="res://assets/background/2.png" id="5_uq7hp"]
+[ext_resource type="Texture2D" uid="uid://ccr538nqpustc" path="res://assets/background/3.png" id="6_n4om3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0idui"]
 size = Vector2(1200, 16)
@@ -13,19 +16,57 @@ size = Vector2(1200, 16)
 position = Vector2(0, 200)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=860719100]
-position = Vector2(633, 161)
+position = Vector2(633, 188)
 shape = SubResource("RectangleShape2D_0idui")
 
 [node name="ColorRect" type="ColorRect" parent="Ground" unique_id=581330644]
 offset_left = 33.0
-offset_top = 153.0
+offset_top = 180.0
 offset_right = 1233.0
-offset_bottom = 169.0
+offset_bottom = 196.0
+
+[node name="Hud" parent="." unique_id=271866720 instance=ExtResource("2_gsbbr")]
 
 [node name="Player" parent="." unique_id=1621257842 instance=ExtResource("1_i2pqh")]
 position = Vector2(136, 289)
 
-[node name="Hud" parent="." unique_id=271866720 instance=ExtResource("2_gsbbr")]
-
 [node name="Oni" parent="." unique_id=1126774902 instance=ExtResource("3_qtqmo")]
-position = Vector2(429, 307)
+position = Vector2(695, 306)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1650088613]
+layer = -1
+
+[node name="BGColor" type="ColorRect" parent="CanvasLayer" unique_id=2056846735]
+offset_right = 426.0
+offset_bottom = 240.0
+color = Color(0.2901961, 0.3529412, 0.43137255, 1)
+
+[node name="Parallax2D" type="Parallax2D" parent="CanvasLayer" unique_id=979290794]
+scroll_scale = Vector2(0.1, 0.1)
+repeat_size = Vector2(448, 0)
+repeat_times = 5
+
+[node name="3" type="Sprite2D" parent="CanvasLayer/Parallax2D" unique_id=592527344]
+position = Vector2(270, -70)
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("6_n4om3")
+
+[node name="Parallax2D2" type="Parallax2D" parent="CanvasLayer" unique_id=1857617406]
+scroll_scale = Vector2(0.3, 0.3)
+repeat_size = Vector2(448, 0)
+repeat_times = 5
+
+[node name="2" type="Sprite2D" parent="CanvasLayer/Parallax2D2" unique_id=1481717135]
+position = Vector2(270, -10)
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("5_uq7hp")
+
+[node name="Parallax2D3" type="Parallax2D" parent="CanvasLayer" unique_id=1959961153]
+scroll_scale = Vector2(0.6, 0.6)
+repeat_size = Vector2(448, 0)
+repeat_times = 5
+
+[node name="1" type="Sprite2D" parent="CanvasLayer/Parallax2D3" unique_id=1857766413]
+position = Vector2(270, 50)
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("4_a5anj")

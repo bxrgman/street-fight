@@ -1,1 +1,141 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="124" height="124" x="2" y="2" fill="#363d52" stroke="#212532" stroke-width="4" rx="14"/><g fill="#fff" transform="translate(12.322 12.322)scale(.101)"><path d="M105 673v33q407 354 814 0v-33z"/><path fill="#478cbf" d="m105 673 152 14q12 1 15 14l4 67 132 10 8-61q2-11 15-15h162q13 4 15 15l8 61 132-10 4-67q3-13 15-14l152-14V427q30-39 56-81-35-59-83-108-43 20-82 47-40-37-88-64 7-51 8-102-59-28-123-42-26 43-46 89-49-7-98 0-20-46-46-89-64 14-123 42 1 51 8 102-48 27-88 64-39-27-82-47-48 49-83 108 26 42 56 81zm0 33v39c0 276 813 276 814 0v-39l-134 12-5 69q-2 10-14 13l-162 11q-12 0-16-11l-10-65H446l-10 65q-4 11-16 11l-162-11q-12-3-14-13l-5-69z"/><path d="M483 600c0 34 58 34 58 0v-86c0-34-58-34-58 0z"/><circle cx="725" cy="526" r="90"/><circle cx="299" cy="526" r="90"/></g><g fill="#414042" transform="translate(12.322 12.322)scale(.101)"><circle cx="307" cy="532" r="60"/><circle cx="717" cy="532" r="60"/></g></svg>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#040814"/>
+      <stop offset="55%" stop-color="#0a1026"/>
+      <stop offset="100%" stop-color="#12091a"/>
+    </linearGradient>
+
+    <radialGradient id="planetGrad" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#55f3ff"/>
+      <stop offset="40%" stop-color="#1f7dbe"/>
+      <stop offset="75%" stop-color="#122b5f"/>
+      <stop offset="100%" stop-color="#081229"/>
+    </radialGradient>
+
+    <radialGradient id="planetGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5af7ff" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#2b91ff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#2b91ff" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d8fbff" stop-opacity="0.75"/>
+      <stop offset="50%" stop-color="#6ecfff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.08"/>
+    </linearGradient>
+
+    <linearGradient id="vGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8ffff"/>
+      <stop offset="35%" stop-color="#7efcff"/>
+      <stop offset="70%" stop-color="#00d8ff"/>
+      <stop offset="100%" stop-color="#4d7dff"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="starGlow" x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <clipPath id="planetClip">
+      <circle cx="512" cy="580" r="270"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bgGrad)"/>
+
+  <!-- Nebula haze -->
+  <ellipse cx="260" cy="180" rx="260" ry="120" fill="#5f2bff" opacity="0.10"/>
+  <ellipse cx="810" cy="220" rx="240" ry="110" fill="#00d8ff" opacity="0.08"/>
+  <ellipse cx="760" cy="820" rx="280" ry="120" fill="#ff2fa8" opacity="0.06"/>
+
+  <!-- Stars -->
+  <g fill="#ffffff" opacity="0.9">
+    <circle cx="110" cy="120" r="2"/>
+    <circle cx="190" cy="210" r="2.5"/>
+    <circle cx="300" cy="90" r="1.8"/>
+    <circle cx="415" cy="180" r="1.6"/>
+    <circle cx="560" cy="95" r="2.2"/>
+    <circle cx="640" cy="160" r="1.4"/>
+    <circle cx="760" cy="95" r="2.1"/>
+    <circle cx="900" cy="150" r="2.8"/>
+    <circle cx="845" cy="285" r="1.7"/>
+    <circle cx="720" cy="250" r="1.4"/>
+    <circle cx="600" cy="245" r="2.4"/>
+    <circle cx="470" cy="280" r="1.4"/>
+    <circle cx="120" cy="330" r="1.7"/>
+    <circle cx="220" cy="410" r="1.5"/>
+    <circle cx="915" cy="420" r="2"/>
+    <circle cx="840" cy="520" r="1.6"/>
+    <circle cx="120" cy="700" r="1.9"/>
+    <circle cx="250" cy="835" r="1.5"/>
+    <circle cx="505" cy="910" r="2.3"/>
+    <circle cx="760" cy="860" r="1.8"/>
+    <circle cx="910" cy="740" r="2.2"/>
+  </g>
+
+  <g stroke="#bafcff" stroke-linecap="round" filter="url(#starGlow)">
+    <line x1="175" y1="560" x2="175" y2="574" stroke-width="2" opacity="0.9"/>
+    <line x1="168" y1="567" x2="182" y2="567" stroke-width="2" opacity="0.9"/>
+    <line x1="862" y1="630" x2="862" y2="646" stroke-width="2" opacity="0.85"/>
+    <line x1="854" y1="638" x2="870" y2="638" stroke-width="2" opacity="0.85"/>
+    <line x1="790" y1="365" x2="790" y2="381" stroke-width="2" opacity="0.8"/>
+    <line x1="782" y1="373" x2="798" y2="373" stroke-width="2" opacity="0.8"/>
+  </g>
+
+  <!-- Planet glow -->
+  <circle cx="512" cy="580" r="330" fill="url(#planetGlow)"/>
+
+  <!-- Planet -->
+  <circle cx="512" cy="580" r="270" fill="url(#planetGrad)"/>
+
+  <!-- Planet atmosphere rim -->
+  <circle cx="512" cy="580" r="276" fill="none" stroke="#80f7ff" stroke-opacity="0.35" stroke-width="10"/>
+
+  <!-- Planet surface accents -->
+  <g clip-path="url(#planetClip)">
+    <path d="M280 570 C360 500, 440 520, 500 470 C560 420, 665 430, 760 520 L760 710 L280 710 Z"
+          fill="#091d42" opacity="0.35"/>
+    <path d="M250 640 C360 600, 460 650, 560 620 C640 595, 705 610, 780 680 L780 860 L250 860 Z"
+          fill="#061226" opacity="0.40"/>
+    <path d="M300 450 C370 430, 460 390, 560 430 C620 455, 700 430, 735 395"
+          fill="none" stroke="#8affff" stroke-opacity="0.18" stroke-width="16" stroke-linecap="round"/>
+    <path d="M335 715 C430 690, 520 720, 640 700"
+          fill="none" stroke="#76d0ff" stroke-opacity="0.16" stroke-width="20" stroke-linecap="round"/>
+  </g>
+
+  <!-- Ring -->
+  <ellipse cx="512" cy="610" rx="380" ry="92" fill="none" stroke="url(#ringGrad)" stroke-width="22" opacity="0.8"/>
+  <ellipse cx="512" cy="610" rx="380" ry="92" fill="none" stroke="#dffcff" stroke-opacity="0.10" stroke-width="42"/>
+
+  <!-- V logo -->
+  <g filter="url(#softGlow)">
+    <path d="M352 210 L512 680 L672 210"
+          fill="none"
+          stroke="url(#vGrad)"
+          stroke-width="34"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+
+    <path d="M512 280 L512 590"
+          fill="none"
+          stroke="#f8ffff"
+          stroke-opacity="0.72"
+          stroke-width="7"
+          stroke-linecap="round"/>
+  </g>
+
+  <!-- Subtle foreground horizon haze -->
+  <ellipse cx="512" cy="875" rx="420" ry="80" fill="#8b49ff" opacity="0.06"/>
+</svg>
